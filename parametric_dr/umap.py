@@ -9,13 +9,17 @@ McInnes, Healy, Melville (2018). UMAP: Uniform Manifold Approximation
 and Projection for Dimension Reduction. arXiv:1802.03426.
 """
 
+import logging
+
 import numpy as np
 import torch
 from scipy.optimize import curve_fit
 from scipy.sparse import coo_matrix
 
 from ._base import ParametricDR
-from .utils import compute_knn_graph
+from .utils import LOGGER_NAME, compute_knn_graph
+
+logger = logging.getLogger(LOGGER_NAME)
 
 DEFAULT_EPS = 1e-4
 
@@ -186,7 +190,7 @@ class Parametric_UMAP(ParametricDR):
         self.spread = spread
         self.negative_sample_rate = negative_sample_rate
 
-    def fit(self, X, y=None, epochs=100, verbose=0):
+    def fit(self, X, y=None, epochs=100):
         """Train the parametric UMAP model.
 
         Parameters
@@ -194,7 +198,6 @@ class Parametric_UMAP(ParametricDR):
         X : 2-d array (N, num_inputs)
         y : ignored
         epochs : int
-        verbose : int
 
         Returns
         -------
@@ -257,9 +260,9 @@ class Parametric_UMAP(ParametricDR):
                 epoch_loss += loss.item()
                 n_batches += 1
 
-            if verbose and n_batches > 0:
+            if n_batches > 0:
                 avg = epoch_loss / n_batches
-                print(f"  Epoch {epoch + 1}/{epochs}, loss={avg:.4f}")
+                logger.debug("Epoch %d/%d, loss=%.4f", epoch + 1, epochs, avg)
 
         self._is_fitted = True
         return self

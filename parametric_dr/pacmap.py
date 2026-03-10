@@ -9,11 +9,15 @@ Reduction Tools Work: An Empirical Approach to Deciphering t-SNE, UMAP,
 TriMap, and PaCMAP for Data Visualization. JMLR.
 """
 
+import logging
+
 import numpy as np
 import torch
 
 from ._base import ParametricDR
-from .utils import compute_knn_graph
+from .utils import LOGGER_NAME, compute_knn_graph
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def pacmap_loss(anchor_emb, near_emb, mn_emb, fp_emb, w_NB, w_MN, w_FP):
@@ -90,7 +94,7 @@ class Parametric_PaCMAP(ParametricDR):
         self.n_MN_ratio = n_MN_ratio
         self.n_FP_ratio = n_FP_ratio
 
-    def fit(self, X, y=None, epochs=100, verbose=0):
+    def fit(self, X, y=None, epochs=100):
         """Train the parametric PaCMAP model.
 
         Parameters
@@ -98,7 +102,6 @@ class Parametric_PaCMAP(ParametricDR):
         X : 2-d array (N, num_inputs)
         y : ignored
         epochs : int
-        verbose : int
 
         Returns
         -------
@@ -182,9 +185,9 @@ class Parametric_PaCMAP(ParametricDR):
                 opt.step()
                 epoch_loss += loss.item()
 
-            if verbose and num_batches > 0:
+            if num_batches > 0:
                 avg = epoch_loss / num_batches
-                print(f"  Epoch {epoch + 1}/{epochs}, loss={avg:.4f}")
+                logger.debug("Epoch %d/%d, loss=%.4f", epoch + 1, epochs, avg)
 
         self._is_fitted = True
         return self

@@ -4,11 +4,16 @@ Provides tools for estimating intrinsic dimensionality and sweeping across
 different target dimensionalities to find optimal embeddings.
 """
 
+import logging
 from typing import Optional, Tuple, Dict, Any
+
 import numpy as np
 import pandas as pd
 
 from .metrics import trustworthiness, continuity, shepard_correlation
+from .utils import LOGGER_NAME
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def estimate_intrinsic_dim(X: np.ndarray, method: str = "twonn") -> Dict[str, Any]:
@@ -116,7 +121,6 @@ def sweep_dims(
     metric: str = "euclidean",
     metric_kwargs: Optional[Dict[str, Any]] = None,
     plot: bool = True,
-    verbose: bool = True,
     **model_kwargs,
 ) -> Dict[str, Any]:
     """Train DR models at multiple dimensionalities and evaluate quality.
@@ -149,8 +153,6 @@ def sweep_dims(
         ``{"VI": inv_cov}`` for mahalanobis).
     plot : bool
         If True, return a matplotlib Figure with T/C/Shepard vs dim plots.
-    verbose : bool
-        If True, print progress messages.
     **model_kwargs
         Keyword arguments to pass to model_class constructor.
         Must include num_inputs and any other required hyperparameters.
@@ -175,7 +177,6 @@ def sweep_dims(
     ...     dims=[2, 3, 4, 5],
     ...     num_inputs=64,
     ...     num_epochs=20,
-    ...     verbose=True,
     ...     plot=True
     ... )
     >>> print(results["results"])
@@ -195,8 +196,7 @@ def sweep_dims(
     results_list = []
 
     for d in dims:
-        if verbose:
-            print(f"Training at dim={d}...")
+        logger.debug("Training at dim=%d...", d)
 
         # Instantiate and train model
         model = model_class(num_outputs=d, **model_kwargs)
@@ -219,8 +219,7 @@ def sweep_dims(
         c = continuity(X_subsample_high, embedding_subsample, k=k, metric=metric, **mkw)
         s = shepard_correlation(X_subsample_high, embedding_subsample, metric=metric, **mkw)
 
-        if verbose:
-            print(f"  T={t:.4f}, C={c:.4f}, S={s:.4f}")
+        logger.info("T=%.4f, C=%.4f, S=%.4f", t, c, s)
 
         results_list.append(
             {
@@ -238,8 +237,7 @@ def sweep_dims(
     elbow_idx = _elbow_detection(trust_curve)
     elbow_dim = int(results_df.iloc[elbow_idx]["dim"])
 
-    if verbose:
-        print(f"Elbow detected at dim={elbow_dim}")
+    logger.info("Elbow detected at dim=%d", elbow_dim)
 
     # Optional plot
     figure = None
@@ -247,7 +245,7 @@ def sweep_dims(
         try:
             import matplotlib.pyplot as plt
         except ImportError:
-            print("matplotlib not installed; skipping plot.")
+            logger.warning("matplotlib not installed; skipping plot.")
         else:
             fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 

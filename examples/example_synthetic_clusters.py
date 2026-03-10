@@ -28,10 +28,7 @@ from parametric_dr import (
     Parametric_TriMap,
     Parametric_CEBRA,
     TemporalMixin,
-    trustworthiness,
-    continuity,
-    neighborhood_preservation,
-    shepard_correlation,
+    compute_metrics,
 )
 from parametric_dr.utils import get_multiscale_perplexities
 
@@ -278,7 +275,7 @@ def main():
                 alpha=alpha_, batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "t-SNE (perplexity=30)",
@@ -289,7 +286,7 @@ def main():
                 batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         # --- PaCMAP ---
         {
@@ -300,7 +297,7 @@ def main():
                 n_neighbors=10, batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "PaCMAP (k=30)",
@@ -310,7 +307,7 @@ def main():
                 n_neighbors=30, batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         # --- UMAP ---
         {
@@ -322,7 +319,7 @@ def main():
                 batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "UMAP (k=15, min_dist=0.5)",
@@ -333,7 +330,7 @@ def main():
                 batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         # --- TriMap ---
         {
@@ -345,7 +342,7 @@ def main():
                 batch_size=batch_size, seed=54321,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         # --- CEBRA ---
         {
@@ -359,7 +356,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -375,7 +372,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -391,7 +388,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -457,10 +454,8 @@ def main():
         label = entry["label"]
         emb = model.transform(train_data)
 
-        t = trustworthiness(train_data, emb, k=metrics_k)
-        c = continuity(train_data, emb, k=metrics_k)
-        n = neighborhood_preservation(train_data, emb, k=metrics_k)
-        s = shepard_correlation(train_data, emb)
+        m = compute_metrics(train_data, emb, k=metrics_k)
+        t, c, n, s = m["trustworthiness"], m["continuity"], m["neighborhood_preservation"], m["shepard_correlation"]
         fit_time = entry.get("fit_time")
 
         metrics_results[label] = {"T": t, "C": c, "N": n, "S": s, "time": fit_time}

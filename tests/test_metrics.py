@@ -9,6 +9,7 @@ from parametric_dr.metrics import (
     continuity,
     neighborhood_preservation,
     shepard_correlation,
+    compute_metrics,
 )
 
 
@@ -112,21 +113,21 @@ class TestDistanceMatrix:
         X = np.random.randn(30, 4)
         D = _distance_matrix(X, "euclidean")
         expected = squareform(pdist(X, "euclidean"))
-        np.testing.assert_allclose(D, expected, atol=1e-12)
+        np.testing.assert_allclose(D, expected, atol=1e-6)
 
     def test_cosine_matches_pdist(self):
         np.random.seed(1)
         X = np.random.randn(25, 6)
         D = _distance_matrix(X, "cosine")
         expected = squareform(pdist(X, "cosine"))
-        np.testing.assert_allclose(D, expected, atol=1e-12)
+        np.testing.assert_allclose(D, expected, atol=1e-6)
 
     def test_minkowski_with_kwargs(self):
         np.random.seed(2)
         X = np.random.randn(20, 3)
         D = _distance_matrix(X, "minkowski", p=3)
         expected = squareform(pdist(X, "minkowski", p=3))
-        np.testing.assert_allclose(D, expected, atol=1e-12)
+        np.testing.assert_allclose(D, expected, atol=1e-6)
 
     def test_symmetry_and_zero_diagonal(self):
         np.random.seed(3)
@@ -272,3 +273,81 @@ class TestEuclideanRegression:
         s1 = shepard_correlation(X, Y)
         s2 = shepard_correlation(X, Y)
         assert s1 == s2
+
+
+# ---------------------------------------------------------------------------
+# Tests for compute_metrics (combined function)
+# ---------------------------------------------------------------------------
+
+
+class TestComputeMetrics:
+    """Test that compute_metrics matches individual function results."""
+
+    def test_matches_individual_functions(self):
+        np.random.seed(42)
+        X = np.random.randn(40, 5)
+        Y = np.random.randn(40, 2)
+        k = 5
+
+        combined = compute_metrics(X, Y, k=k)
+        assert combined["trustworthiness"] == trustworthiness(X, Y, k=k)
+        assert combined["continuity"] == continuity(X, Y, k=k)
+        assert combined["neighborhood_preservation"] == neighborhood_preservation(X, Y, k=k)
+        assert combined["shepard_correlation"] == shepard_correlation(X, Y)
+
+    def test_matches_with_nondefault_metric(self):
+        np.random.seed(42)
+        X = np.random.randn(40, 5)
+        Y = np.random.randn(40, 2)
+        k = 5
+
+        combined = compute_metrics(X, Y, k=k, metric="cosine")
+        assert combined["trustworthiness"] == trustworthiness(X, Y, k=k, metric="cosine")
+        assert combined["continuity"] == continuity(X, Y, k=k, metric="cosine")
+        assert combined["neighborhood_preservation"] == neighborhood_preservation(X, Y, k=k, metric="cosine")
+        assert combined["shepard_correlation"] == shepard_correlation(X, Y, metric="cosine")
+
+    def test_returns_all_keys(self):
+        np.random.seed(42)
+        X = np.random.randn(30, 4)
+        Y = np.random.randn(30, 2)
+        result = compute_metrics(X, Y, k=5)
+        assert set(result.keys()) == {
+            "trustworthiness", "continuity",
+            "neighborhood_preservation", "shepard_correlation",
+        }
+
+    def test_good_embedding_scores_high(self, identity_embedding):
+        X, Y = identity_embedding
+        result = compute_metrics(X, Y, k=5)
+        assert result["trustworthiness"] > 0.8
+        assert result["continuity"] > 0.8
+        assert result["shepard_correlation"] > 0.5
+
+
+class TestPrecomputedDistanceMatrix:
+    """Test that passing precomputed D_high/D_low matches fresh computation."""
+
+    def test_precomputed_matches_fresh(self):
+        np.random.seed(42)
+        X = np.random.randn(40, 5)
+        Y = np.random.randn(40, 2)
+        k = 5
+
+        # Use float32 to match internal computation
+        D_high = _distance_matrix(X)
+        D_low = _distance_matrix(Y)
+
+        assert trustworthiness(X, Y, k=k) == trustworthiness(X, Y, k=k, D_high=D_high, D_low=D_low)
+        assert continuity(X, Y, k=k) == continuity(X, Y, k=k, D_high=D_high, D_low=D_low)
+        assert neighborhood_preservation(X, Y, k=k) == neighborhood_preservation(X, Y, k=k, D_high=D_high, D_low=D_low)
+        assert shepard_correlation(X, Y) == shepard_correlation(X, Y, D_high=D_high, D_low=D_low)
+
+    def test_precomputed_high_only(self):
+        np.random.seed(42)
+        X = np.random.randn(40, 5)
+        Y = np.random.randn(40, 2)
+        D_high = _distance_matrix(X)
+
+        assert trustworthiness(X, Y, k=5) == trustworthiness(X, Y, k=5, D_high=D_high)
+        assert shepard_correlation(X, Y) == shepard_correlation(X, Y, D_high=D_high)

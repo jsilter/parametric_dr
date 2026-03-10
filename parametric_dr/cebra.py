@@ -9,11 +9,16 @@ Schneider, Lee, Mathis (2023). Learnable latent embeddings for joint
 behavioural and neural analysis. Nature.
 """
 
+import logging
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
 from ._base import ParametricDR
+from .utils import LOGGER_NAME
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def cebra_loss(anchor_emb, pos_emb, neg_emb, temperature=1.0):
@@ -88,7 +93,7 @@ class Parametric_CEBRA(ParametricDR):
         self.temperature = temperature
         self.negative_sample_rate = negative_sample_rate
 
-    def fit(self, X, y=None, time_indices=None, epochs=100, verbose=0):
+    def fit(self, X, y=None, time_indices=None, epochs=100):
         """Train the parametric CEBRA model.
 
         Parameters
@@ -99,7 +104,6 @@ class Parametric_CEBRA(ParametricDR):
             Temporal index for each sample. If None, assumes sequential
             ordering (0, 1, 2, ...).
         epochs : int
-        verbose : int
 
         Returns
         -------
@@ -162,9 +166,9 @@ class Parametric_CEBRA(ParametricDR):
                 epoch_loss += loss.item()
                 n_batches_done += 1
 
-            if verbose and n_batches_done > 0:
+            if n_batches_done > 0:
                 avg = epoch_loss / n_batches_done
-                print(f"  Epoch {epoch + 1}/{epochs}, loss={avg:.4f}")
+                logger.debug("Epoch %d/%d, loss=%.4f", epoch + 1, epochs, avg)
 
         self._is_fitted = True
         return self

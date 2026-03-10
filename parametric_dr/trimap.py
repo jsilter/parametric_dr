@@ -8,11 +8,15 @@ Amid & Warmuth (2019). TriMap: Large-scale Dimensionality Reduction
 Using Triplets. arXiv:1910.00204.
 """
 
+import logging
+
 import numpy as np
 import torch
 
 from ._base import ParametricDR
-from .utils import compute_knn_graph
+from .utils import LOGGER_NAME, compute_knn_graph
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def trimap_loss(anchor_emb, near_emb, far_emb, weights):
@@ -134,7 +138,7 @@ class Parametric_TriMap(ParametricDR):
         self.n_outliers = n_outliers
         self.n_random = n_random
 
-    def fit(self, X, y=None, epochs=100, verbose=0):
+    def fit(self, X, y=None, epochs=100):
         """Train the parametric TriMap model.
 
         Parameters
@@ -142,7 +146,6 @@ class Parametric_TriMap(ParametricDR):
         X : 2-d array (N, num_inputs)
         y : ignored
         epochs : int
-        verbose : int
 
         Returns
         -------
@@ -187,9 +190,9 @@ class Parametric_TriMap(ParametricDR):
                 epoch_loss += loss.item()
                 n_batches += 1
 
-            if verbose and n_batches > 0:
+            if n_batches > 0:
                 avg = epoch_loss / n_batches
-                print(f"  Epoch {epoch + 1}/{epochs}, loss={avg:.4f}")
+                logger.debug("Epoch %d/%d, loss=%.4f", epoch + 1, epochs, avg)
 
         self._is_fitted = True
         return self

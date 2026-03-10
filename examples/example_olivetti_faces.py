@@ -26,10 +26,7 @@ from parametric_dr import (
     Parametric_PaCMAP,
     Parametric_UMAP,
     Parametric_TriMap,
-    trustworthiness,
-    continuity,
-    neighborhood_preservation,
-    shepard_correlation,
+    compute_metrics,
 )
 
 plt.style.use("ggplot")
@@ -117,7 +114,7 @@ def main():
                 batch_size=batch_size, seed=seed,
                 n_pca=None, encoder=_make_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "PaCMAP",
@@ -127,7 +124,7 @@ def main():
                 n_neighbors=10, batch_size=batch_size, seed=seed,
                 n_pca=None, encoder=_make_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "UMAP",
@@ -138,7 +135,7 @@ def main():
                 batch_size=batch_size, seed=seed,
                 n_pca=None, encoder=_make_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "TriMap",
@@ -149,7 +146,7 @@ def main():
                 batch_size=batch_size, seed=seed,
                 n_pca=None, encoder=_make_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
     ]
 
@@ -205,10 +202,8 @@ def main():
         label = entry["label"]
         emb = model.transform(X)
 
-        t = trustworthiness(X, emb, k=metrics_k)
-        c = continuity(X, emb, k=metrics_k)
-        n = neighborhood_preservation(X, emb, k=metrics_k)
-        s = shepard_correlation(X, emb)
+        m = compute_metrics(X, emb, k=metrics_k)
+        t, c, n, s = m["trustworthiness"], m["continuity"], m["neighborhood_preservation"], m["shepard_correlation"]
         fit_time = entry.get("fit_time")
 
         metrics_results[label] = {"T": t, "C": c, "N": n, "S": s, "time": fit_time}

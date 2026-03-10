@@ -2,6 +2,8 @@
 
 import numpy as np
 
+LOGGER_NAME = "parametric_dr"
+
 
 def Hbeta_vec(distances: np.ndarray, betas: np.ndarray):
     """Vectorized Gaussian kernel entropy computation.

@@ -32,10 +32,7 @@ from parametric_dr import (
     Parametric_UMAP,
     Parametric_CEBRA,
     TemporalMixin,
-    trustworthiness,
-    continuity,
-    neighborhood_preservation,
-    shepard_correlation,
+    compute_metrics,
 )
 
 plt.style.use("ggplot")
@@ -170,7 +167,7 @@ def main():
                 batch_size=batch_size, seed=seed,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "PaCMAP",
@@ -181,7 +178,7 @@ def main():
                 n_neighbors=10, batch_size=batch_size, seed=seed,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         {
             "label": "UMAP",
@@ -193,7 +190,7 @@ def main():
                 batch_size=batch_size, seed=seed,
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
-            "fit_kwargs": {"epochs": epochs, "verbose": 1},
+            "fit_kwargs": {"epochs": epochs},
         },
         # --- Temporal methods ---
         {
@@ -208,7 +205,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -224,7 +221,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -240,7 +237,7 @@ def main():
                 encoder=_make_small_encoder(num_inputs, num_outputs),
             ),
             "fit_kwargs": {
-                "epochs": epochs, "verbose": 1,
+                "epochs": epochs,
                 "time_indices": time_indices,
             },
         },
@@ -286,10 +283,8 @@ def main():
         label = entry["label"]
         emb = model.transform(X_obs)
 
-        t = trustworthiness(X_obs, emb, k=metrics_k)
-        c = continuity(X_obs, emb, k=metrics_k)
-        n = neighborhood_preservation(X_obs, emb, k=metrics_k)
-        s = shepard_correlation(X_obs, emb)
+        m = compute_metrics(X_obs, emb, k=metrics_k)
+        t, c, n, s = m["trustworthiness"], m["continuity"], m["neighborhood_preservation"], m["shepard_correlation"]
         ts = _trajectory_smoothness(emb)
         fit_time = entry.get("fit_time")
 

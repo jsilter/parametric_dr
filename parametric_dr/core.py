@@ -9,7 +9,7 @@ van der Maaten, L. (2009). Learning a parametric embedding by preserving
 local structure. RBM, 500(500), 26.
 """
 
-import datetime
+import logging
 from typing import List, Union, Optional
 
 import numpy as np
@@ -17,7 +17,9 @@ import torch
 
 from ._base import ParametricDR
 from .loss import kl_loss
-from .utils import calc_betas_loop, get_squared_cross_diff_np
+from .utils import LOGGER_NAME, calc_betas_loop, get_squared_cross_diff_np
+
+logger = logging.getLogger(LOGGER_NAME)
 
 DEFAULT_EPS = 1e-7
 
@@ -168,7 +170,6 @@ class Parametric_tSNE(ParametricDR):
         y=None,
         training_betas: Optional[np.ndarray] = None,
         epochs: int = 10,
-        verbose: int = 0,
     ):
         """Train the parametric t-SNE model.
 
@@ -179,8 +180,6 @@ class Parametric_tSNE(ParametricDR):
         training_betas : 2-d array (N, P), optional
             Precomputed beta values. If None, computed from perplexities.
         epochs : int
-        verbose : int
-            0 = silent, 1 = progress, 2 = detailed.
 
         Returns
         -------
@@ -193,8 +192,7 @@ class Parametric_tSNE(ParametricDR):
             assert self.perplexities is not None, (
                 "Must provide perplexities or training_betas"
             )
-            if verbose:
-                print(f"{datetime.datetime.now()}: Computing training betas...")
+            logger.debug("Computing training betas...")
             training_betas = self._calc_training_betas(X, self.perplexities)
         num_perplexities = training_betas.shape[1]
 
@@ -202,12 +200,7 @@ class Parametric_tSNE(ParametricDR):
         num_batches = n // self.batch_size
         opt = self._setup_training()
 
-        if verbose:
-            print(
-                f"{datetime.datetime.now()}: "
-                f"Training for {epochs} epochs, "
-                f"{num_batches} batches/epoch"
-            )
+        logger.debug("Training for %d epochs, %d batches/epoch", epochs, num_batches)
 
         for epoch in range(epochs):
             perm = np.random.permutation(n)
@@ -239,12 +232,10 @@ class Parametric_tSNE(ParametricDR):
                 epoch_loss += loss.item()
                 n_batches += 1
 
-            if verbose:
-                avg_loss = epoch_loss / max(n_batches, 1)
-                print(f"  Epoch {epoch + 1}/{epochs}, loss={avg_loss:.4f}")
+            avg_loss = epoch_loss / max(n_batches, 1)
+            logger.debug("Epoch %d/%d, loss=%.4f", epoch + 1, epochs, avg_loss)
 
-        if verbose:
-            print(f"{datetime.datetime.now()}: Training complete")
+        logger.debug("Training complete")
 
         self._is_fitted = True
         return self

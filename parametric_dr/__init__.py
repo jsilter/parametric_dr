@@ -11,6 +11,7 @@ from .metrics import (
     continuity,
     neighborhood_preservation,
     shepard_correlation,
+    compute_metrics,
 )
 from .analysis import (
     estimate_intrinsic_dim,
@@ -28,6 +29,7 @@ __all__ = [
     "continuity",
     "neighborhood_preservation",
     "shepard_correlation",
+    "compute_metrics",
     "estimate_intrinsic_dim",
     "sweep_dims",
 ]

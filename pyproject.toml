@@ -15,6 +15,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
 ]
 dependencies = [
     "numpy",

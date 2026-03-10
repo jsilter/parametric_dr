@@ -1,3 +1,5 @@
+__version__ = "3.0.0"
+
 from .core import Parametric_tSNE
 from .pacmap import Parametric_PaCMAP
 from .umap import Parametric_UMAP

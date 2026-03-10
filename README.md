@@ -70,29 +70,37 @@ encoder = nn.Sequential(
 ptSNE = Parametric_tSNE(high_dims, num_outputs, perplexity, encoder=encoder)
 ```
 
-The "perplexity" parameter can also be a list (e.g. [10,20,30,50,100,200]), in which case the total loss function is a sum of the loss function calculated from each perplexity. This is an ad-hoc method inspired by Verleysen et al 2014. Initialization and training step computation time will be linear in the number of perplexity values used, though it shouldn't affect the speed of the final trained model.
+If the dimensionality is large (>100), it is recommended to apply PCA first (see the `n_pca` parameter).
 
-If the dimensionality is large (>100), it is recommended that one use a simple dimensionality reduction method first, such as PCA.
-See van der Maaten's FAQ on tSNE.
+## t-SNE notes
 
-# Footnotes
+The `perplexity` parameter can also be a list (e.g. `[10, 20, 30, 50, 100, 200]`), in which case the total loss is a sum over each perplexity value. This multiscale approach is inspired by Lee et al. 2014. Initialization time scales linearly with the number of perplexity values, though inference speed is unaffected.
 
-1. van der Maaten 2009 used a ReLu as the output layer. The default here is a linear output layer. ReLu would occasionally produce poor results in the form of all zeroes in one dimension.
+The default output layer is linear rather than ReLU (as in van der Maaten 2009<sup>1</sup>); ReLU occasionally produced degenerate embeddings with all-zero dimensions.
 
 # References
 
+**t-SNE**
+
 van der Maaten, L. (2009). Learning a parametric embedding by preserving local structure. RBM, 500(500), 26.
 
-L.J.P. van der Maaten and G.E. Hinton. Visualizing High-Dimensional Data Using t-SNE. Journal of Machine Learning Research 9(Nov):2579-2605, 2008
+van der Maaten, L.J.P. and Hinton, G.E. (2008). Visualizing High-Dimensional Data Using t-SNE. Journal of Machine Learning Research, 9(Nov), 2579-2605.
 
-John A. Lee, , Diego H. Peluffo-Ordonez, and Michel Verleysen. Multiscale stochastic neighbor embedding: Towards parameter-free dimensionality reduction. ESANN 2014 proceedings, European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning. Bruges (Belgium), 23-25 April 2014, ISBN 978-287419095-7. https://pdfs.semanticscholar.org/1e4b/21aca0590d4572a99fa3df3edd453f2d8a5a.pdf
+Lee, J.A., Peluffo-Ordonez, D.H., and Verleysen, M. (2014). Multiscale stochastic neighbor embedding: Towards parameter-free dimensionality reduction. ESANN 2014.
 
-MATLAB Parametric tSNE implementation: https://lvdmaaten.github.io/tsne/code/ptsne.tar.gz
-Available at https://lvdmaaten.github.io/tsne/
+**UMAP**
 
-Mirrored at https://github.com/jsilter/lvdmaaten.github.io/tree/master/tsne/code
+McInnes, L., Healy, J., and Melville, J. (2018). UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. arXiv:1802.03426.
 
-Also see the tSNE FAQ: https://lvdmaaten.github.io/tsne/#faq
-Archive: http://archive.is/lc4lr
+**PaCMAP**
 
+Wang, Y., Huang, H., Ruber, C., and Liang, Y. (2021). Understanding How Dimension Reduction Tools Work: An Empirical Approach to Deciphering t-SNE, UMAP, TriMap, and PaCMAP for Data Visualization. Journal of Machine Learning Research, 22(201), 1-73.
+
+**TriMap**
+
+Amid, E. and Warmuth, M.K. (2019). TriMap: Large-scale Dimensionality Reduction Using Triplets. arXiv:1910.00204.
+
+**CEBRA**
+
+Schneider, S., Lee, J.H., and Mathis, M.W. (2023). Learnable latent embeddings for joint behavioural and neural analysis. Nature, 617, 360-368.
 

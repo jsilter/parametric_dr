@@ -110,7 +110,8 @@ def _generate_lorenz_data(n_steps=3000, obs_dim=20, noise_std=0.5, seed=42):
 
 def _basic_configure_logging():
     logging.basicConfig(
-        format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S %Z"
+        level=logging.INFO,
+        format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S %Z",
     )
 
 

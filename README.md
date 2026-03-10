@@ -76,7 +76,7 @@ PCA preprocessing is enabled by default (`n_pca=50`) and automatically skipped w
 
 Benchmark on synthetic clustered data (500 samples, 14 clusters, 15 training epochs, 3-layer encoder with 128 hidden units, no PCA preprocessing). Quality metrics computed on training data with k=10. Fit times measured on CPU.
 
-**Metrics:** Trustworthiness (T) and Continuity (C) measure local neighborhood fidelity; Neighborhood Preservation (N) is the fraction of k-NN overlap; Shepard Correlation (S) measures global distance preservation.
+**Metrics:** Trustworthiness (T), Continuity (C), Neighborhood Preservation (N), and Shepard Correlation (S). See [docs/metrics.md](docs/metrics.md) for definitions and interpretation.
 
 ![Method comparison](docs/method_comparison.png)
 

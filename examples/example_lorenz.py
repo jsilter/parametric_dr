@@ -33,6 +33,7 @@ from parametric_dr import (
     Parametric_CEBRA,
     TemporalMixin,
     compute_metrics,
+    trajectory_smoothness,
 )
 
 plt.style.use("ggplot")
@@ -124,11 +125,6 @@ def _make_small_encoder(num_inputs, num_outputs):
         nn.Linear(128, num_outputs),
     )
 
-
-def _trajectory_smoothness(emb):
-    """Mean squared distance between consecutive embedding points."""
-    diffs = np.diff(emb, axis=0)
-    return float(np.mean(np.sum(diffs ** 2, axis=1)))
 
 
 # ---------------------------------------------------------------------------
@@ -286,7 +282,7 @@ def main():
 
         m = compute_metrics(X_obs, emb, k=metrics_k)
         t, c, n, s = m["trustworthiness"], m["continuity"], m["neighborhood_preservation"], m["shepard_correlation"]
-        ts = _trajectory_smoothness(emb)
+        ts = trajectory_smoothness(emb)
         fit_time = entry.get("fit_time")
 
         metrics_results[label] = {"T": t, "C": c, "N": n, "S": s, "TS": ts, "time": fit_time}

@@ -62,6 +62,35 @@ Computes the Pearson correlation between all $\binom{N}{2}$ pairwise distances i
 
 **Note:** Methods that prioritize local structure (t-SNE, UMAP) tend to have lower Shepard correlation than methods that preserve global structure. This is expected and not necessarily a flaw.
 
+## Trajectory Smoothness
+
+**Question:** How smooth is the trajectory in the embedding?
+
+For temporally ordered data, measures the average squared step size between consecutive points in the embedding. A smooth trajectory (small, consistent steps) gives a low score; a jagged trajectory (large jumps between consecutive timepoints) gives a high score.
+
+**Range:** $[0, \infty)$. Lower is smoother.
+
+**Formula (unnormalized):**
+
+$$\text{TS}_\text{raw} = \frac{1}{N-1} \sum_{t=1}^{N-1} \| \mathbf{y}_t - \mathbf{y}_{t+1} \|^2$$
+
+where $\mathbf{y}_t$ is the embedding of the $t$-th timepoint.
+
+**Normalized variant (default):** The raw score depends on the absolute scale of the embedding, making it incomparable across methods that produce different output scales. The normalized version divides by the mean squared pairwise distance across the embedding:
+
+$$\text{TS} = \frac{\text{TS}_\text{raw}}{\frac{1}{\binom{M}{2}} \sum_{i < j} \| \mathbf{y}_i - \mathbf{y}_j \|^2}$$
+
+where $M$ is a subsample of points (default 500) used for efficiency. This gives the ratio "how big is a typical step relative to the overall spread?" and is scale-invariant.
+
+**When to use:** This metric is only meaningful for data with a natural temporal or sequential ordering. It is not included in `compute_metrics()` since not all data has temporal structure; call it separately.
+
+```python
+from parametric_dr import trajectory_smoothness
+
+ts = trajectory_smoothness(embedding)                  # normalized (default)
+ts_raw = trajectory_smoothness(embedding, normalize=False)  # unnormalized
+```
+
 ## Choosing $k$
 
 The parameter $k$ (number of neighbors) controls the scale of "local" in $T$, $C$, and $N$. Typical values are 5--20. Smaller $k$ focuses on very local structure; larger $k$ captures broader neighborhood relationships. The default in this package is $k = 10$.

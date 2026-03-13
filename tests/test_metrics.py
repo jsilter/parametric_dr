@@ -9,6 +9,7 @@ from parametric_dr.metrics import (
     continuity,
     neighborhood_preservation,
     shepard_correlation,
+    trajectory_smoothness,
     compute_metrics,
 )
 
@@ -351,3 +352,66 @@ class TestPrecomputedDistanceMatrix:
 
         assert trustworthiness(X, Y, k=5) == trustworthiness(X, Y, k=5, D_high=D_high)
         assert shepard_correlation(X, Y) == shepard_correlation(X, Y, D_high=D_high)
+
+
+# ---------------------------------------------------------------------------
+# Tests for trajectory_smoothness
+# ---------------------------------------------------------------------------
+
+
+class TestTrajectorySmoothnessUnnormalized:
+    """Tests for trajectory_smoothness with normalize=False."""
+
+    def test_constant_embedding_is_zero(self):
+        emb = np.ones((20, 2))
+        assert trajectory_smoothness(emb, normalize=False) == 0.0
+
+    def test_linear_trajectory(self):
+        """Uniform steps should give a constant step size."""
+        emb = np.column_stack([np.arange(10), np.zeros(10)]).astype(np.float32)
+        # Each step is (1, 0), squared norm = 1.0
+        np.testing.assert_allclose(
+            trajectory_smoothness(emb, normalize=False), 1.0, atol=1e-6,
+        )
+
+    def test_jagged_worse_than_smooth(self):
+        t = np.linspace(0, 2 * np.pi, 100)
+        smooth = np.column_stack([np.cos(t), np.sin(t)])
+        jagged = smooth.copy()
+        jagged[1::2] *= 3  # every other point jumps outward
+        assert trajectory_smoothness(jagged, normalize=False) > trajectory_smoothness(smooth, normalize=False)
+
+
+class TestTrajectorySmoothnessNormalized:
+    """Tests for trajectory_smoothness with normalize=True (default)."""
+
+    def test_constant_embedding_is_zero(self):
+        emb = np.ones((20, 2))
+        assert trajectory_smoothness(emb) == 0.0
+
+    def test_scale_invariant(self):
+        """Normalized score should not change when embedding is scaled."""
+        np.random.seed(42)
+        emb = np.cumsum(np.random.randn(100, 2), axis=0).astype(np.float32)
+        s1 = trajectory_smoothness(emb)
+        s2 = trajectory_smoothness(emb * 10.0)
+        np.testing.assert_allclose(s1, s2, rtol=0.05)
+
+    def test_jagged_worse_than_smooth(self):
+        t = np.linspace(0, 2 * np.pi, 100)
+        smooth = np.column_stack([np.cos(t), np.sin(t)])
+        jagged = smooth.copy()
+        jagged[1::2] *= 3
+        assert trajectory_smoothness(jagged) > trajectory_smoothness(smooth)
+
+    def test_positive(self):
+        np.random.seed(42)
+        emb = np.random.randn(50, 3)
+        assert trajectory_smoothness(emb) > 0
+
+    def test_normalize_false_differs(self):
+        np.random.seed(42)
+        emb = np.random.randn(50, 2).astype(np.float32)
+        raw = trajectory_smoothness(emb, normalize=False)
+        normed = trajectory_smoothness(emb, normalize=True)
+        assert raw != normed

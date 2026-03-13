@@ -41,6 +41,7 @@ from parametric_dr import (
     Parametric_CEBRA,
     TemporalMixin,
     compute_metrics,
+    trajectory_smoothness,
 )
 
 plt.style.use("ggplot")
@@ -172,12 +173,10 @@ def _make_encoder(num_inputs, num_outputs):
     )
 
 
-def _trajectory_smoothness(emb, pseudotime):
-    """Mean squared distance between pseudotime-adjacent embedding points."""
+def _trajectory_smoothness_by_pseudotime(emb, pseudotime):
+    """Trajectory smoothness ordered by pseudotime."""
     order = np.argsort(pseudotime)
-    emb_ordered = emb[order]
-    diffs = np.diff(emb_ordered, axis=0)
-    return float(np.mean(np.sum(diffs ** 2, axis=1)))
+    return trajectory_smoothness(emb[order])
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +357,7 @@ def main():
 
         m = compute_metrics(X, emb, k=metrics_k)
         t, c, n, s = m["trustworthiness"], m["continuity"], m["neighborhood_preservation"], m["shepard_correlation"]
-        ts = _trajectory_smoothness(emb, pseudotime)
+        ts = _trajectory_smoothness_by_pseudotime(emb, pseudotime)
         fit_time = entry.get("fit_time")
 
         metrics_results[label] = {"T": t, "C": c, "N": n, "S": s, "TS": ts, "time": fit_time}

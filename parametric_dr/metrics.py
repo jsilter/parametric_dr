@@ -308,6 +308,57 @@ def shepard_correlation(
     return float(np.corrcoef(d_high, d_low)[0, 1])
 
 
+def trajectory_smoothness(
+    X_low: np.ndarray,
+    normalize: bool = True,
+    subsample: int = 500,
+    seed: int = 0,
+) -> float:
+    """Mean squared step size between consecutive embedding points.
+
+    Measures how smooth a trajectory is in the embedding space.
+    Points are assumed to be in temporal order (row 0 is the first
+    timepoint, row 1 the second, etc.).
+
+    Parameters
+    ----------
+    X_low : 2-d array (N, D)
+        Embedding coordinates in temporal order.
+    normalize : bool
+        If True, divide by the mean squared pairwise distance so that
+        the metric is scale-invariant and comparable across methods.
+        If False, return the raw mean squared step size.
+    subsample : int
+        Number of points to subsample when estimating the mean pairwise
+        distance for normalization. Ignored when ``normalize=False``.
+    seed : int
+        Random seed for the subsample.
+
+    Returns
+    -------
+    score : float >= 0
+        Lower is smoother. When normalized, the value is the ratio of
+        the mean step size to the mean pairwise distance.
+    """
+    X_low = _as_float32(X_low)
+    diffs = np.diff(X_low, axis=0)
+    mean_step = float(np.mean(np.sum(diffs ** 2, axis=1)))
+
+    if not normalize:
+        return mean_step
+
+    n = len(X_low)
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(n, size=min(subsample, n), replace=False)
+    subset = X_low[idx]
+    sq_dists = _pdist32(subset) ** 2
+    mean_pdist = float(np.mean(sq_dists))
+
+    if mean_pdist == 0:
+        return 0.0
+    return mean_step / mean_pdist
+
+
 def compute_metrics(
     X_high: np.ndarray, X_low: np.ndarray, k: int = 10,
     metric: str = "euclidean", **metric_kwargs,

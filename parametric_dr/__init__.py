@@ -1,4 +1,6 @@
-__version__ = "3.0.0"
+from importlib.metadata import version as _version
+
+__version__ = _version("parametric_dr")
 
 from .core import Parametric_tSNE
 from .pacmap import Parametric_PaCMAP
@@ -11,6 +13,7 @@ from .metrics import (
     continuity,
     neighborhood_preservation,
     shepard_correlation,
+    trajectory_smoothness,
     compute_metrics,
 )
 from .analysis import (
@@ -29,6 +32,7 @@ __all__ = [
     "continuity",
     "neighborhood_preservation",
     "shepard_correlation",
+    "trajectory_smoothness",
     "compute_metrics",
     "estimate_intrinsic_dim",
     "sweep_dims",
